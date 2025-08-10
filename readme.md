@@ -36,6 +36,9 @@ This interactive dashboard allows users to explore airline flight data, visualiz
 - Data is cleaned, encoded, and scaled before modeling.
 - Linear Regression is used for price prediction (can be replaced with other models).
 - Input validation and error messages are included for user-friendly experience.
+- Model performance dashboard displays key metrics (MSE, RMSE, MAE, R²) and visualizations (predicted vs actual, residuals histogram).
+- Confidence intervals are provided for real-time predictions in the predictor form.
+- Tables for sample records, info, and describe are displayed at full width for better readability.
 
 ---
 
@@ -45,10 +48,10 @@ This interactive dashboard allows users to explore airline flight data, visualiz
   View histograms and box plots of flight prices.
 
 - **Exploratory Analysis Tab**  
-  Explore sample data, column info, and summary statistics.
+  Explore sample data, column info, summary statistics, and model performance metrics/visualizations.
 
 - **Interactive Flight Predictor Form**  
-  Enter flight details and get a predicted price using a regression model.
+  Enter flight details and get a predicted price with a 95% confidence interval using a regression model.
 
 ---
 

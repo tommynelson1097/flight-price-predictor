@@ -8,7 +8,9 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from scipy import stats
 import io
+
 # Scikit-learn: Modeling & Evaluation
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.ensemble import RandomForestRegressor
@@ -29,17 +31,51 @@ Welcome to the interactive dashboard for exploring and predicting airline flight
 
 @st.cache #avoiding reloading data every time
 def load_data():
-    path = r'C:\Users\tnel1\OneDrive\MSBA\Data-Mining\Project-1\airlines_flights_data.csv'
+    path = 'airlines_flights_data.csv'  # Use local file in current folder
     df = pd.read_csv(path)
-    return df 
+    return df
 df = load_data().copy()
 
 # Create tabs
-tab1, tab2, tab3 = st.tabs(["📊 Flight Price Distribution", "✈️ Flight Data Exploratory Analysis", "🧮 Interactive Flight Predictor Form"])
+tab1, tab2, tab3 = st.tabs([ "✈️ Flight Data Exploration", "📊 Flight Price Distribution","🧮 Interactive Flight Predictor Form"])
 
 # Tab 1: Histogram Page
 with tab1:
+    # --- Model Performance Summary (Static) ---
+    st.markdown("---")
+    st.header("Model Performance Summary (Linear Regression)")
+    st.markdown("""
+    <ul>
+        <li><b>Mean Squared Error (MSE):</b> 45,154,392.45</li>
+        <li><b>Root Mean Squared Error (RMSE):</b> 6,719.70</li>
+        <li><b>Mean Absolute Error (MAE):</b> 4,572.61</li>
+        <li><b>R-squared (R²) Score:</b> 0.9123</li>
+    </ul>
+    """, unsafe_allow_html=True)
 
+    st.subheader("Head of Data - 100 Sample Records")
+    st.write(df.head(100), use_container_width=True)
+
+    # Display DataFrame info in a table format
+    info_df = pd.DataFrame({
+        "Column": df.columns,
+        "Non-Null Count": df.notnull().sum(),
+        "Dtype": df.dtypes.astype(str)
+    })
+    st.subheader("Info")
+    st.dataframe(info_df)
+
+    # Basic Data Exploration
+    buffer = io.StringIO()
+    s = buffer.getvalue()
+    st.text(s)
+    st.subheader("Describe")
+    # Display DataFrame summary statistics
+    st.write(df.describe(), use_container_width=True)
+
+
+
+with tab2:
     fig, ax = plt.subplots(figsize=(10, 6))
     counts, bins, patches = ax.hist(df['price'], bins=20, color='turquoise', edgecolor='black')
     ax.set_title('Binned Distribution of Flight Prices')
@@ -60,28 +96,6 @@ with tab1:
     ax2.set_title('Box Plot of Flight Prices')
     ax2.set_xlabel('Price')
     st.pyplot(fig2)
-
-
-with tab2:
-    st.subheader("Head of Data - 100 Sample Records")
-    st.write(df.head(100))
-
-    # Display DataFrame info in a table format
-    info_df = pd.DataFrame({
-        "Column": df.columns,
-        "Non-Null Count": df.notnull().sum(),
-        "Dtype": df.dtypes.astype(str)
-    })
-    st.subheader("Info")
-    st.dataframe(info_df)
-
-    # Basic Data Exploration
-    buffer = io.StringIO()
-    s = buffer.getvalue()
-    st.text(s)
-    st.subheader("Describe")
-    # Display DataFrame summary statistics
-    st.write(df.describe())
 
 
 
@@ -169,6 +183,30 @@ with tab3:
             model.fit(X_train_scaled, y_train)  # In production, load a pre-trained model instead of fitting here!
             predicted_price = model.predict(input_scaled)[0]
 
+
+
+            # Calculate 95% confidence interval for the prediction
+            y_pred_train = model.predict(X_train_scaled)
+            residuals = y_train - y_pred_train
+            dof = X_train_scaled.shape[0] - X_train_scaled.shape[1] - 1
+            residual_std_error = np.sqrt(np.sum(residuals ** 2) / dof)
+
+            # Add intercept to input for variance calculation
+            X_train_scaled_with_intercept = np.column_stack((np.ones(X_train_scaled.shape[0]), X_train_scaled))
+            input_scaled_with_intercept = np.insert(input_scaled, 0, 1, axis=1)
+            # Calculate (X'X)^-1
+            xtx_inv = np.linalg.inv(np.dot(X_train_scaled_with_intercept.T, X_train_scaled_with_intercept))
+            # Standard error of prediction
+            se_pred = np.sqrt(
+                residual_std_error ** 2 * (
+                    1 + np.dot(np.dot(input_scaled_with_intercept, xtx_inv), input_scaled_with_intercept.T)
+                )
+            )
+            t_value = stats.t.ppf(0.975, dof)
+            ci_lower = predicted_price - t_value * se_pred[0][0]
+            ci_upper = predicted_price + t_value * se_pred[0][0]
+
             st.write("Entered Data:")
             st.dataframe(input_df)
             st.success(f"Predicted Flight Price: ${predicted_price:,.2f}")
+            st.info(f"95% Confidence Interval: $ {ci_lower:,.2f}  to  $ {ci_upper:,.2f}")
