@@ -29,7 +29,7 @@ st.markdown("""
 Welcome to the interactive dashboard for exploring and predicting airline flight prices!
 """)
 
-@st.cache #avoiding reloading data every time
+@st.cache_data #avoiding reloading data every time
 def load_data():
     path = 'airlines_flights_data.csv'  # Use local file in current folder
     df = pd.read_csv(path)
