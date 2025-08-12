@@ -2,6 +2,9 @@
 
 Access the live app here: https://flight-price-predictor-rdnqhbf3y4798jgabc93gf.streamlit.app/
 
+# Source Data
+Airlines flight data: https://www.kaggle.com/datasets/rohitgrewal/airlines-flights-data
+
 # Airline Flight Price Predictor
 
 Welcome to the Airline Flight Price Predictor project!  
